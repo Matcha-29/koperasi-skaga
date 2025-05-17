@@ -1,6 +1,56 @@
 <?php
-// index.php
+require_once './config/connection.php';
+
 session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+$success = $_SESSION['success'] ?? '';
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['success'], $_SESSION['error']);
+
+if (empty($nama) && empty($idPengguna)) {
+    header('Location: login.php');
+}
+
+if (isset($_POST['submit'])) {
+    // Ambil dan validasi input
+    $nominalInput = $_POST['nominal'] ?? '0';
+    $nominal = (int) str_replace('.', '', $nominalInput); // Hapus titik dan konversi ke integer
+
+    if ($nominal <= 0) {
+        $_SESSION['error'] = 'Nominal tidak valid.';
+        header('Location: ajuan.php');
+        exit;
+    }
+
+    $jenisPengajuan = 'reguler'; // Atau ambil dari input jika tersedia
+    $tanggal = date('Y-m-d');
+    $status = 'proses';
+
+    // Siapkan pernyataan SQL
+    $stmt = $conn->prepare('INSERT INTO tb_pengajuan_peminjaman (id_pengguna, jenis_pengajuan, nominal, tanggal, status) VALUES (?, ?, ?, ?, ?)');
+    if ($stmt === false) {
+        $_SESSION['error'] = 'Gagal menyiapkan pernyataan SQL.';
+        header('Location: ajuan.php');
+        exit;
+    }
+
+    // Ikat parameter
+    $stmt->bind_param('isdss', $idPengguna, $jenisPengajuan, $nominal, $tanggal, $status);
+
+    // Eksekusi pernyataan
+    if ($stmt->execute()) {
+        $_SESSION['success'] = 'Pengajuan berhasil diajukan.';
+    } else {
+        $_SESSION['error'] = 'Terjadi kesalahan saat mengirim pengajuan.';
+    }
+
+    $stmt->close();
+    header('Location: ajuan.php');
+    exit;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -24,7 +74,7 @@ session_start();
     </style>
 </head>
 <body class="bg-gray-100">
-    <div class="max-w-md mx-auto h-screen flex flex-col bg-gray-50">
+    <form method="POST" class="max-w-md mx-auto h-screen flex flex-col bg-gray-50">
         <div class="px-5 pt-10 flex-1">
             <!-- Header -->
             <h1 class="text-2xl font-semibold text-center mb-8">Ajuan Pembiayaan</h1>
@@ -47,14 +97,14 @@ session_start();
                 <div class="border-b border-gray-300 pb-2">
                     <div class="flex items-center">
                         <span class="text-black mr-1">RP</span>
-                        <input type="text" class="w-full bg-transparent outline-none text-black text-lg" id="nominal" value="0">
+                        <input name="nominal" type="text" class="w-full bg-transparent outline-none text-black text-lg" id="nominal" value="0">
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Submit Button - Positioned directly above keypad -->
-        <button class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg text-center mb-4 mx-1" id="ajukanButton">AJUKAN</button>
+        <button type="submit" name="submit" class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg text-center mb-4 mx-1" id="ajukanButton">AJUKAN</button>
         
         <!-- Custom Keypad -->
         <div class="w-full bg-gray-200 pb-8 pt-1 px-1">
@@ -108,7 +158,7 @@ session_start();
             </div>
             
         </div>
-    </div>
+    </form>
     
     <!-- Success Modal (initially hidden) - Centered square with close button -->
     <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="successContainer">
@@ -132,9 +182,13 @@ session_start();
                     <i class="fas fa-check text-red-600 text-4xl"></i>
                 </div>
                 
-                <!-- Success message -->
-                <h2 class="text-xl font-bold mb-2 text-white text-center">Pembiayaan diajukan</h2>
-                <p class="text-sm text-center text-white">Cek Aplikasi secara berkala untuk memastikan status pengajuan!</p>
+                <?php if(!empty($success)) : ?>
+                    <!-- Success message -->
+                    <h2 class="text-xl font-bold mb-2 text-white text-center"><?= $success ?></h2>
+                    <p class="text-sm text-center text-white">Cek Aplikasi secara berkala untuk memastikan status pengajuan!</p>
+                <?php elseif (!empty($error)): ?>
+                    <h2 class="text-xl font-bold mb-2 text-white text-center"><?= $error ?></h2>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -225,11 +279,15 @@ session_start();
             nominalInput.value = formatRupiah('0');
         }
         
-        // Event listener for Submit button
-        ajukanButton.addEventListener('click', function() {
-            // Show success modal
+        // Tampilkan modal jika ada session success atau error
+        <?php if (!empty($success) || !empty($error)) : ?>
             successContainer.classList.remove('hidden');
-        });
+        <?php endif; ?>
+        
+        // Tampilkan modal jika ada session success
+        <?php if (!empty($success)) : ?>
+            successContainer.classList.remove('hidden');
+        <?php endif; ?>
         
         // Event listener for Close button on success modal
         closeButton.addEventListener('click', function() {
@@ -242,19 +300,3 @@ session_start();
     </script>
 </body>
 </html>
-
-<?php
-// process.php (if needed to save data to server)
-/*
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nominal = $_POST['nominal'] ?? '';
-    
-    // Process data here (e.g., save to database)
-    
-    // Return JSON response
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'success', 'message' => 'Pembiayaan berhasil diajukan']);
-    exit;
-}
-*/
-?>

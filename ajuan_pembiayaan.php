@@ -1,3 +1,32 @@
+<?php
+
+require_once './config/connection.php';
+
+session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+
+if (empty($nama) && empty($idPengguna)) {
+    header('Location: login.php');
+}
+
+$stmt = $conn->prepare('SELECT * FROM tb_pengajuan_peminjaman WHERE id_pengguna = ?');
+$stmt->bind_param('i', $idPengguna);
+$stmt->execute();
+$result = $stmt->get_result();
+
+function formatTanggal($tanggal)
+{
+    $date = new DateTime($tanggal);
+
+    $formatter = new IntlDateFormatter('id_ID', IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'Asia/Jakarta');
+
+    return $formatter->format($date);
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -48,39 +77,31 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="py-2 px-2 border border-gray-300">1</td>
-                                    <td class="py-2 px-2 border border-gray-300">13-03-2025</td>
-                                    <td class="py-2 px-2 border border-gray-300">Reguler</td>
-                                    <td class="py-2 px-2 border border-gray-300">Rp340</td>
-                                    <td class="py-2 px-2 border border-gray-300">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                            Proses
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-2 border border-gray-300">2</td>
-                                    <td class="py-2 px-2 border border-gray-300">1-03-2025</td>
-                                    <td class="py-2 px-2 border border-gray-300">Reguler</td>
-                                    <td class="py-2 px-2 border border-gray-300">Rp500</td>
-                                    <td class="py-2 px-2 border border-gray-300">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Diterima
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-2 border border-gray-300">3</td>
-                                    <td class="py-2 px-2 border border-gray-300">12-02-2025</td>
-                                    <td class="py-2 px-2 border border-gray-300">Insidental</td>
-                                    <td class="py-2 px-2 border border-gray-300">Rp250</td>
-                                    <td class="py-2 px-2 border border-gray-300">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                            Ditolak
-                                        </span>
-                                    </td>
-                                </tr>
+                                <?php
+                                $no = 1;
+                                while ($row = $result->fetch_assoc()) : ?>
+                                    <tr>
+                                        <td class="py-2 px-2 border border-gray-300"><?= $no++ ?></td>
+                                        <td class="py-2 px-2 border border-gray-300"><?= formatTanggal($row['tanggal']) ?></td>
+                                        <td class="py-2 px-2 border border-gray-300"><?= ucfirst($row['jenis_pengajuan']) ?></td>
+                                        <td class="py-2 px-2 border border-gray-300">Rp <?= number_format($row['nominal'], 0, ',', '.') ?></td>
+                                        <td class="py-2 px-2 border border-gray-300">
+                                            <?php if ($row['status'] === 'proses') : ?>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    Proses
+                                                </span>
+                                            <?php elseif ($row['status'] === 'diterima') : ?>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Diterima
+                                                </span>
+                                            <?php else : ?>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Ditolak
+                                                </span>
+                                            <?php endif ?>
+                                        </td>
+                                    </tr>
+                                <?php endwhile ?>
                             </tbody>
                         </table>
                     </div>

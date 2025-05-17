@@ -1,19 +1,60 @@
 <?php
-// Data pinjaman reguler
-$pinjamanReguler = [
-    'Januari' => 'Rp0',
-    'Februari' => 'Rp0',
-    'Maret' => 'Rp840.000',
-    'April' => 'Rp0',
-    'Mei' => 'Rp0',
-    'Juni' => 'Rp0',
-    'Juli' => 'Rp0',
-    'Agustus' => 'Rp0',
-    'September' => 'Rp0',
-    'Oktober' => 'Rp0',
-    'November' => 'Rp0',
-    'Desember' => 'Rp0'
+require_once './config/connection.php';
+
+session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+
+if (empty($nama) && empty($idPengguna)) {
+    header('Location: login.php');
+    exit();
+}
+
+// Set timezone Indonesia dan ambil tahun saat ini
+date_default_timezone_set('Asia/Jakarta');
+$tahunSekarang = date('Y');
+
+// Daftar bulan lengkap
+$daftarBulan = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
+
+// Ambil data terbaru per bulan dari tb_pinjaman_reguler
+$query = $conn->prepare("
+    SELECT pr.bulan, pr.jumlah_angsuran
+    FROM tb_pinjaman_reguler pr
+    INNER JOIN (
+        SELECT bulan, MAX(id) AS max_id
+        FROM tb_pinjaman_reguler
+        WHERE id_pengguna = ? AND tahun = ?
+        GROUP BY bulan
+    ) latest 
+    ON pr.id = latest.max_id
+");
+$query->bind_param("is", $idPengguna, $tahunSekarang);
+$query->execute();
+$result = $query->get_result();
+
+// Simpan hasil ke array
+$dataAngsuran = [];
+while ($row = $result->fetch_assoc()) {
+    $dataAngsuran[$row['bulan']] = $row['jumlah_angsuran'];
+}
+
+// Susun data final
+$pinjamanReguler = [];
+$sisaAngsuran = 0;
+
+foreach ($daftarBulan as $bulan) {
+    if (isset($dataAngsuran[$bulan]) && $dataAngsuran[$bulan] > 0) {
+        $pinjamanReguler[$bulan] = 'Rp ' . number_format($dataAngsuran[$bulan], 0, ',', '.');
+        $sisaAngsuran++;
+    } else {
+        $pinjamanReguler[$bulan] = 'Rp 0';
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -39,7 +80,7 @@ $pinjamanReguler = [
 
             <!-- Status Banner -->
             <div class="bg-orange-500 text-white text-center py-4 rounded-lg mb-4 font-medium text-lg">
-                Sisa angsuran kurang 1x
+                Sisa angsuran kurang <?php echo $sisaAngsuran; ?>x
             </div>
 
             <!-- Card untuk tabel -->

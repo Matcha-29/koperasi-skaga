@@ -1,26 +1,62 @@
 <?php
+include './config/connection.php';
+
 // Mulai sesi jika diperlukan
-// session_start();
+session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+
+if (!empty($nama) && !empty($idPengguna))
+{
+    header('Location: index.php');
+}
 
 // Menangani pengiriman formulir
 $pesanError = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'] ?? '';
+    $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    
-    // Tambahkan logika autentikasi Anda di sini
-    // Contoh:
-    // if (autentikasiPengguna($username, $password)) {
-    //     $_SESSION['user'] = $username;
-    //     header("Location: index.php");
-    //     exit;
-    // } else {
-    //     $pesanError = "Username atau password salah";
-    // }
-    
-    // For demo purposes, redirect to index.php
-    header("Location: index.php");
-    exit;
+
+    if (empty($username) || empty($password)) {
+        $pesanError = 'Nama dan password wajib diisi.';
+    } else {
+        $stmt = $conn->prepare('SELECT * FROM tb_pengguna WHERE nama = ?');
+        $stmt->bind_param('s', $username);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        if ($result && $user = $result->fetch_assoc())
+        {
+            if (password_verify($password, $user['password']))
+            {
+                $_SESSION['id_pengguna'] = $user['id'];
+                $_SESSION['nama'] = $user['nama'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['role'] = $user['role'];
+
+                if ($user['role'] === 'admin')
+                {
+                    header('Location: ./admin/index.php');
+                }
+                else
+                {
+                    header('Location: index.php');
+                }
+
+                exit;
+            }
+            else
+            {
+                $pesanError = 'Password salah.';
+            }
+        }
+        else
+        {
+            $pesanError = 'Nama atau password salah.';
+        }
+    }
 }
 ?>
 
@@ -67,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         type="text"
                         id="username"
                         name="username"
-                        placeholder="Masukan email anda"
+                        placeholder="Masukan nama anda"
                         class="w-full border-b border-gray-300 py-2 focus:outline-none"
                         required
                     >

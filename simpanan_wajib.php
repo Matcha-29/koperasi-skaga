@@ -1,22 +1,60 @@
 <?php
-// Data simpanan wajib
-$simpananWajib = [
-    'Januari' => 'Rp100.000',
-    'Februari' => 'Rp100.000',
-    'Maret' => 'Rp100.000',
-    'April' => 'Rp100.000',
-    'Mei' => 'Rp100.000',
-    'Juni' => 'Rp0',
-    'Juli' => 'Rp100.000',
-    'Agustus' => 'Rp100.000',
-    'September' => 'Rp100.000',
-    'Oktober' => 'Rp100.000',
-    'November' => 'Rp0',
-    'Desember' => 'Rp100.000'
+require_once './config/connection.php';
+
+session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+
+if (empty($nama) && empty($idPengguna)) {
+    header('Location: login.php');
+    exit();
+}
+
+// Set timezone Indonesia dan ambil tahun saat ini
+date_default_timezone_set('Asia/Jakarta');
+$tahunSekarang = date('Y');
+
+// Daftar bulan lengkap
+$daftarBulan = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
 
-// Bulan dengan nilai Rp0 akan diberikan background berbeda
-$bulanKosong = ['Juni', 'November'];
+// Ambil hanya data terbaru per bulan
+$query = $conn->prepare("
+    SELECT sw.bulan, sw.jumlah_simpanan 
+    FROM tb_simpanan_wajib sw
+    INNER JOIN (
+        SELECT bulan, MAX(id) AS max_id
+        FROM tb_simpanan_wajib
+        WHERE id_pengguna = ? AND tahun = ?
+        GROUP BY bulan
+    ) latest 
+    ON sw.id = latest.max_id
+");
+$query->bind_param("is", $idPengguna, $tahunSekarang);
+$query->execute();
+$result = $query->get_result();
+
+// Simpan hasil ke array
+$dataSimpanan = [];
+while ($row = $result->fetch_assoc()) {
+    $dataSimpanan[$row['bulan']] = $row['jumlah_simpanan'];
+}
+
+// Susun data final untuk ditampilkan
+$simpananWajib = [];
+$bulanKosong = [];
+
+foreach ($daftarBulan as $bulan) {
+    if (isset($dataSimpanan[$bulan])) {
+        $simpananWajib[$bulan] = 'Rp ' . number_format($dataSimpanan[$bulan], 0, ',', '.');
+    } else {
+        $simpananWajib[$bulan] = 'Rp 0';
+        $bulanKosong[] = $bulan;
+    }
+}
 ?>
 
 <!DOCTYPE html>

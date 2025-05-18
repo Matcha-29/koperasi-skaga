@@ -1,19 +1,60 @@
 <?php
-// Data simpanan sukarela
-$simpananSukarela = [
-    'Januari' => 'Rp100.000',
-    'Februari' => 'Rp0',
-    'Maret' => 'Rp0',
-    'April' => 'Rp0',
-    'Mei' => 'Rp100.000',
-    'Juni' => 'Rp0',
-    'Juli' => 'Rp100.000',
-    'Agustus' => 'Rp0',
-    'September' => 'Rp100.000',
-    'Oktober' => 'Rp100.000',
-    'November' => 'Rp0',
-    'Desember' => 'Rp100.000'
+require_once './config/connection.php';
+
+session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+
+if (empty($nama) && empty($idPengguna)) {
+    header('Location: login.php');
+    exit();
+}
+
+// Set timezone Indonesia dan ambil tahun saat ini
+date_default_timezone_set('Asia/Jakarta');
+$tahunSekarang = date('Y');
+
+// Daftar bulan lengkap
+$daftarBulan = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
+
+// Ambil hanya data terbaru per bulan
+$query = $conn->prepare("
+    SELECT sw.bulan, sw.jumlah_simpanan 
+    FROM tb_simpanan_sukarela sw
+    INNER JOIN (
+        SELECT bulan, MAX(id) AS max_id
+        FROM tb_simpanan_sukarela
+        WHERE id_pengguna = ? AND tahun = ?
+        GROUP BY bulan
+    ) latest 
+    ON sw.id = latest.max_id
+");
+$query->bind_param("is", $idPengguna, $tahunSekarang);
+$query->execute();
+$result = $query->get_result();
+
+// Simpan hasil ke array
+$dataSimpanan = [];
+while ($row = $result->fetch_assoc()) {
+    $dataSimpanan[$row['bulan']] = $row['jumlah_simpanan'];
+}
+
+// Susun data final untuk ditampilkan
+$simpananSukarela = [];
+$bulanKosong = [];
+
+foreach ($daftarBulan as $bulan) {
+    if (isset($dataSimpanan[$bulan])) {
+        $simpananSukarela[$bulan] = 'Rp ' . number_format($dataSimpanan[$bulan], 0, ',', '.');
+    } else {
+        $simpananSukarela[$bulan] = 'Rp 0';
+        $bulanKosong[] = $bulan;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -49,7 +90,7 @@ $simpananSukarela = [
                         </thead>
                         <tbody>
                             <?php foreach ($simpananSukarela as $bulan => $jumlah): ?>
-                                <tr>
+                                <tr class="<?php echo in_array($bulan, $bulanKosong) ? 'bg-red-50' : ''; ?>">
                                     <td class="py-3 px-4 border-b text-center"><?php echo $bulan; ?></td>
                                     <td class="py-3 px-4 border-b"><?php echo $jumlah; ?></td>
                                 </tr>

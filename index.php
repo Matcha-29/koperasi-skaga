@@ -1,12 +1,53 @@
 <?php
-// Contoh data pengguna - bisa diganti dengan data dari database
-$userData = [
-    'nama' => 'Muhammad Thalat Hamdi',
-    'simpanan_sukarela' => 0,
-    'simpanan_pokok' => 100000,
-    'simpanan_wajib' => 12000000,
-    'bulan_wajib' => 'Des 2024'
-];
+require_once './config/connection.php';
+
+session_start();
+
+$nama = $_SESSION['nama'] ?? '';
+$idPengguna = $_SESSION['id_pengguna'] ?? '';
+
+if (empty($nama) && empty($idPengguna))
+{
+    header('Location: login.php');
+}
+
+function nominalSimpanan($jenis)
+{
+    global $conn;
+    $stmt = $conn->prepare('SELECT * FROM tb_nominal_simpanan WHERE jenis = ?');
+    $stmt->bind_param('s', $jenis);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $row = $result->fetch_assoc();
+
+    return $row['nominal'] ?? 0;
+}
+
+function tanggal()
+{
+    $locale = 'id_ID';
+    $date = new DateTime(); // sekarang
+    $formatter = new IntlDateFormatter($locale, IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'Asia/Jakarta', null, 'MMMM yyyy');
+
+    return $formatter->format($date); // Output: Mei 2025
+}
+
+function totalSimpananSukarela()
+{
+    global $idPengguna;
+    global $conn;
+
+    $stmt = $conn->prepare('SELECT SUM(jumlah_simpanan) AS total_simpanan_sukarela FROM tb_simpanan_sukarela WHERE id_pengguna = ?');
+    $stmt->bind_param('s', $idPengguna);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $row = $result->fetch_assoc();
+
+    return $row['total_simpanan_sukarela'] ?? 0;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -35,11 +76,13 @@ $userData = [
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-white text-lg">Simpanan sukarela saat ini</p>
-                            <p class="text-white text-3xl font-bold mt-1">Rp 0</p>
+                            <p class="text-white text-3xl font-bold mt-1">
+                                Rp <?= number_format(totalSimpananSukarela(), 0, ',', '.') ?>
+                            </p>
 
                             <div class="mt-4">
                                 <p class="text-white">Nama</p>
-                                <p class="text-white font-medium"><?php echo $userData['nama']; ?></p>
+                                <p class="text-white font-medium"><?= $nama ?></p>
                             </div>
                         </div>
                         <div class="bg-white bg-opacity-20 p-3 rounded-full">
@@ -59,20 +102,24 @@ $userData = [
                     <div class="flex justify-between h-full">
                         <div class="flex flex-col justify-between h-full">
                             <p class="text-gray-800 font-medium">Simpanan Pokok</p>
-                            <p class="text-gray-800 font-bold">Rp100.000</p>
+                            <p class="text-gray-800 font-bold">
+                                Rp <?= number_format(nominalSimpanan('simpanan_pokok'), 0, ',', '.') ?>
+                            </p>
                         </div>
                         <div class="bg-teal-600 p-2 rounded-full h-fit">
                             <i class="fas fa-university text-white"></i>
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Right Card -->
                 <div class="flex-1 bg-gray-200 rounded-xl p-4">
                     <div class="flex justify-between h-full">
                         <div class="flex flex-col justify-between h-full">
-                            <p class="text-gray-800 font-medium">Simpanan Wajib Des 2024</p>
-                            <p class="text-gray-800 font-bold">Rp12.000.000</p>
+                            <p class="text-gray-800 font-medium">Simpanan Wajib <?= tanggal() ?></p>
+                            <p class="text-gray-800 font-bold">
+                                Rp <?= number_format(nominalSimpanan('simpanan_wajib'), 0, ',', '.') ?>
+                            </p>
                         </div>
                         <div class="bg-teal-600 p-2 rounded-full h-fit">
                             <i class="fas fa-wallet text-white"></i>

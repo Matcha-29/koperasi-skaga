@@ -70,24 +70,59 @@ if (isset($_POST['submit'])) {
         .keypad-button {
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .keypad-button:hover {
+            background-color: #f9fafb;
+        }
+        .keypad-button:active {
+            background-color: #f3f4f6;
+        }
+        .bottom-nav {
+            z-index: 1000;
+        }
+        
+        /* Prevent scrolling when dropdown is open */
+        .no-scroll {
+            overflow: hidden;
+        }
+        
+        /* Dropdown overlay to prevent interaction with other elements */
+        .dropdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        /* Ensure dropdown appears above overlay */
+        .dropdown-container {
+            position: relative;
+            z-index: 101;
         }
     </style>
 </head>
-<body class="bg-gray-100"></body>
-    <form method="POST" class="max-w-md mx-auto h-screen flex flex-col bg-gray-50">
+<body class="bg-gray-100">
+    <!-- Dropdown overlay (hidden by default) -->
+    <div id="dropdownOverlay" class="dropdown-overlay hidden" onclick="closeDropdown()"></div>
+    
+    <form method="POST" class="max-w-md mx-auto flex flex-col bg-gray-50 min-h-screen">
         <div class="px-5 pt-10 flex-1">
             <!-- Header -->
             <h1 class="text-2xl font-semibold text-center mb-8">Ajuan Pembiayaan</h1>
             
             <!-- Dropdown Selection -->
-            <div class="bg-white rounded-lg shadow mb-8">
-                <div class="p-4 flex justify-between items-center" onclick="toggleDropdown()">
+            <div class="bg-white rounded-lg shadow mb-8 dropdown-container">
+                <div class="p-4 flex justify-between items-center cursor-pointer" onclick="toggleDropdown()">
                     <span class="text-black font-medium" id="selectedOption">Insidental</span>
                     <i id="dropdownIcon" class="fas fa-chevron-down text-gray-600 transition-transform duration-200"></i>
                 </div>
-                <div id="dropdownMenu" class="hidden p-4 border-t">
-                    <div onclick="selectOption('Reguler')" class="cursor-pointer hover:bg-gray-100 p-2 rounded font-medium">Reguler</div>
-                    <div onclick="selectOption('Insidental')" class="cursor-pointer hover:bg-gray-100 p-2 rounded font-medium">Insidental</div>
+                <div id="dropdownMenu" class="hidden border-t bg-white rounded-b-lg shadow-lg">
+                    <div onclick="selectOption('Reguler')" class="cursor-pointer hover:bg-gray-100 p-4 font-medium transition-colors">Reguler</div>
+                    <div onclick="selectOption('Insidental')" class="cursor-pointer hover:bg-gray-100 p-4 font-medium transition-colors border-t border-gray-100">Insidental</div>
                 </div>
             </div>
             
@@ -97,17 +132,17 @@ if (isset($_POST['submit'])) {
                 <div class="border-b border-gray-300 pb-2">
                     <div class="flex items-center">
                         <span class="text-black mr-1">RP</span>
-                        <input name="nominal" type="text" class="w-full bg-transparent outline-none text-black text-lg" id="nominal" value="0">
+                        <input name="nominal" type="text" class="w-full bg-transparent outline-none text-black text-lg" id="nominal" value="0" readonly>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Submit Button - Positioned directly above keypad -->
-        <button type="submit" name="submit" class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg text-center mb-4 mx-1" id="ajukanButton">AJUKAN</button>
+        <button type="submit" name="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg text-center mb-4 mx-1 transition-colors" id="ajukanButton">AJUKAN</button>
         
         <!-- Custom Keypad -->
-        <div class="w-full bg-gray-200 pb-8 pt-1 px-1">
+        <div class="w-full bg-gray-200 pb-28 pt-1 px-1"> <!-- Increased pb to pb-28 for better spacing -->
             <div class="grid grid-cols-3 gap-2">
                 <div class="bg-white keypad-button flex flex-col items-center py-3 cursor-pointer" onclick="appendNumber('1')">
                     <span class="font-bold text-lg">1</span>
@@ -156,7 +191,28 @@ if (isset($_POST['submit'])) {
                     <span class="text-xs text-gray-500">DELETE</span>
                 </div>
             </div>
-            
+        </div>
+        
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center py-4 bottom-nav">
+            <a href="ajuan_pembiayaan.php" class="flex flex-col items-center text-orange-500">
+                <i class="fas fa-th-large text-xl mb-1"></i>
+                <span class="text-xs">Ajuan</span>
+            </a>
+
+            <!-- Spacer for home button -->
+            <div class="absolute left-1/2 transform -translate-x-1/2 bottom-16">
+                <a href="index.php" class="block">
+                    <div class="w-16 h-16 bg-gray-500 rounded-full flex justify-center items-center shadow-md hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-home text-white text-2xl"></i>
+                    </div>
+                </a>
+            </div>
+
+            <a href="profile.php" class="flex flex-col items-center text-gray-500 hover:text-gray-700 transition-colors">
+                <i class="far fa-user text-xl mb-1"></i>
+                <span class="text-xs">Profil</span>
+            </a>
         </div>
     </form>
     
@@ -184,7 +240,7 @@ if (isset($_POST['submit'])) {
                 
                 <?php if(!empty($success)) : ?>
                     <!-- Success message -->
-                    <h2 class="text-xl font-bold mb-2 text-white text-center"><?= $success ?></h2>
+                    <h2 class="text-xl font-bold mb-2 text-white text-center">Pembiayaan diajukan</h2>
                     <p class="text-sm text-center text-white">Cek Aplikasi secara berkala untuk memastikan status pengajuan!</p>
                 <?php elseif (!empty($error)): ?>
                     <h2 class="text-xl font-bold mb-2 text-white text-center"><?= $error ?></h2>
@@ -202,31 +258,50 @@ if (isset($_POST['submit'])) {
         const dropdownMenu = document.getElementById('dropdownMenu');
         const dropdownIcon = document.getElementById('dropdownIcon');
         const selectedOption = document.getElementById('selectedOption');
+        const dropdownOverlay = document.getElementById('dropdownOverlay');
+        
+        // Store current nominal value to prevent reset
+        let currentNominal = '0';
         
         // Toggle dropdown visibility
         function toggleDropdown() {
             dropdownMenu.classList.toggle('hidden');
             dropdownIcon.classList.toggle('rotate-180');
+            dropdownOverlay.classList.toggle('hidden');
             
-            // If opening the dropdown, scroll to top to ensure visibility
+            // Prevent body scrolling when dropdown is open
             if (!dropdownMenu.classList.contains('hidden')) {
-                window.scrollTo(0, 0);
+                document.body.classList.add('no-scroll');
+            } else {
+                document.body.classList.remove('no-scroll');
             }
+        }
+        
+        // Close dropdown
+        function closeDropdown() {
+            dropdownMenu.classList.add('hidden');
+            dropdownIcon.classList.remove('rotate-180');
+            dropdownOverlay.classList.add('hidden');
+            document.body.classList.remove('no-scroll');
         }
         
         // Select option from dropdown
         function selectOption(option) {
+            // Store current nominal before navigation
+            currentNominal = nominalInput.value;
+            
             // Only navigate if the option is different from current
             if (selectedOption.textContent !== option) {
                 if (option === 'Reguler') {
-                    window.location.href = 'ajuan.php';
+                    // Pass current nominal as URL parameter
+                    const nominal = encodeURIComponent(currentNominal);
+                    window.location.href = `ajuan.php?nominal=${nominal}`;
                     return;
                 }
             }
             
             selectedOption.textContent = option;
-            dropdownMenu.classList.add('hidden');
-            dropdownIcon.classList.remove('rotate-180');
+            closeDropdown();
         }
         
         // Format number to Indonesian Rupiah format
@@ -258,6 +333,7 @@ if (isset($_POST['submit'])) {
             }
             
             nominalInput.value = formatRupiah(currentValue);
+            currentNominal = nominalInput.value; // Update stored value
         }
         
         // Function to delete the last digit
@@ -272,12 +348,34 @@ if (isset($_POST['submit'])) {
             }
             
             nominalInput.value = formatRupiah(currentValue);
+            currentNominal = nominalInput.value; // Update stored value
         }
         
         // Function to clear the input
         function clearInput() {
             nominalInput.value = formatRupiah('0');
+            currentNominal = '0'; // Update stored value
         }
+        
+        // Check if nominal is passed from URL parameter
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+        
+        // Restore nominal from URL parameter if available
+        window.addEventListener('load', function() {
+            const nominalFromUrl = getUrlParameter('nominal');
+            if (nominalFromUrl && nominalFromUrl !== '0') {
+                nominalInput.value = nominalFromUrl;
+                currentNominal = nominalFromUrl;
+            } else {
+                nominalInput.value = formatRupiah('0');
+                currentNominal = '0';
+            }
+        });
         
         // Tampilkan modal jika ada session success atau error
         <?php if (!empty($success) || !empty($error)) : ?>
@@ -290,24 +388,26 @@ if (isset($_POST['submit'])) {
             successContainer.classList.add('hidden');
         });
         
-        // Run format on initial value
-        nominalInput.value = formatRupiah(nominalInput.value);
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdownContainer = document.querySelector('.dropdown-container');
+            if (!dropdownContainer.contains(event.target) && !dropdownMenu.classList.contains('hidden')) {
+                closeDropdown();
+            }
+        });
+        
+        // Add touch feedback for keypad buttons
+        document.querySelectorAll('.keypad-button').forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.backgroundColor = '#f3f4f6';
+            });
+            
+            button.addEventListener('touchend', function() {
+                setTimeout(() => {
+                    this.style.backgroundColor = 'white';
+                }, 100);
+            });
+        });
     </script>
 </body>
 </html>
-
-<?php
-// process.php (if needed to save data to server)
-/*
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nominal = $_POST['nominal'] ?? '';
-    
-    // Process data here (e.g., save to database)
-    
-    // Return JSON response
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'success', 'message' => 'Pembiayaan berhasil diajukan']);
-    exit;
-}
-*/
-?>

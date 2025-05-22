@@ -31,7 +31,7 @@ CREATE TABLE `tb_nominal_simpanan` (
   `id` int NOT NULL,
   `jenis` enum('simpanan_pokok','simpanan_wajib') NOT NULL,
   `nominal` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tb_nominal_simpanan`
@@ -54,7 +54,7 @@ CREATE TABLE `tb_pengajuan_peminjaman` (
   `nominal` int NOT NULL,
   `tanggal` date NOT NULL,
   `status` enum('proses','diterima','ditolak') NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -71,7 +71,7 @@ CREATE TABLE `tb_pengguna` (
   `no_telepon` varchar(255) NOT NULL,
   `foto_profil` varchar(255) DEFAULT NULL,
   `role` enum('admin','pengguna') NOT NULL DEFAULT 'pengguna'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tb_pengguna`
@@ -92,7 +92,7 @@ CREATE TABLE `tb_pinjaman_insidental` (
   `bulan` varchar(255) NOT NULL,
   `tahun` year NOT NULL,
   `jumlah_angsuran` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -106,7 +106,7 @@ CREATE TABLE `tb_pinjaman_reguler` (
   `bulan` varchar(255) NOT NULL,
   `tahun` year NOT NULL,
   `jumlah_angsuran` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -119,7 +119,7 @@ CREATE TABLE `tb_simpanan_pokok` (
   `id_pengguna` int NOT NULL,
   `tanggal_simpanan` date NOT NULL,
   `jumlah_simpanan` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -133,7 +133,7 @@ CREATE TABLE `tb_simpanan_sukarela` (
   `bulan` varchar(255) NOT NULL,
   `tahun` year NOT NULL,
   `jumlah_simpanan` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -147,7 +147,7 @@ CREATE TABLE `tb_simpanan_wajib` (
   `bulan` varchar(255) NOT NULL,
   `tahun` year NOT NULL,
   `jumlah_simpanan` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables

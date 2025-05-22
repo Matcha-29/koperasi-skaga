@@ -47,7 +47,7 @@ if (isset($_POST['submit'])) {
     }
 
     $stmt->close();
-    header('Location: ajuan_insidental.php');
+    header('Location: ajuan_pembiayaan.php');
     exit;
 }
 

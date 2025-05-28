@@ -11,17 +11,23 @@ if (empty($nama) && empty($idPengguna)) {
     header('Location: login.php');
 }
 
-$stmt = $conn->prepare('SELECT * FROM tb_pengajuan_peminjaman WHERE id_pengguna = ?');
+// Perbaikan 1: Tambahkan ORDER BY untuk konsistensi urutan data
+$stmt = $conn->prepare('SELECT * FROM tb_pengajuan_peminjaman WHERE id_pengguna = ? ORDER BY tanggal DESC, id DESC');
 $stmt->bind_param('i', $idPengguna);
 $stmt->execute();
 $result = $stmt->get_result();
 
+// Perbaikan 2: Hitung total data untuk debugging
+$countStmt = $conn->prepare('SELECT COUNT(*) as total FROM tb_pengajuan_peminjaman WHERE id_pengguna = ?');
+$countStmt->bind_param('i', $idPengguna);
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$totalData = $countResult->fetch_assoc()['total'];
+
 function formatTanggal($tanggal)
 {
     $date = new DateTime($tanggal);
-
     $formatter = new IntlDateFormatter('id_ID', IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'Asia/Jakarta');
-
     return $formatter->format($date);
 }
 
@@ -61,10 +67,15 @@ function formatTanggal($tanggal)
                 </div>
             </div>
 
-
             <div class="bg-white rounded-lg shadow-sm">
                 <div class="p-4">
                     <h2 class="text-lg font-semibold mb-4 text-center">Data Pengajuan</h2>
+                    
+                    <!-- Perbaikan 3: Tambahkan info total data untuk debugging -->
+                    <div class="text-sm text-gray-600 mb-2">
+                        Total data: <?= $totalData ?> pengajuan
+                    </div>
+                    
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[600px] border border-gray-300">
                             <thead>
@@ -78,10 +89,17 @@ function formatTanggal($tanggal)
                             </thead>
                             <tbody>
                                 <?php
+                                // Perbaikan 4: Simpan semua data dalam array terlebih dahulu
+                                $dataArray = [];
+                                while ($row = $result->fetch_assoc()) {
+                                    $dataArray[] = $row;
+                                }
+                                
+                                // Perbaikan 5: Tampilkan semua data dengan penomoran yang benar
                                 $no = 1;
-                                while ($row = $result->fetch_assoc()) : ?>
+                                foreach ($dataArray as $row) : ?>
                                     <tr>
-                                        <td class="py-2 px-2 border border-gray-300"><?= $no++ ?></td>
+                                        <td class="py-2 px-2 border border-gray-300"><?= $no ?></td>
                                         <td class="py-2 px-2 border border-gray-300"><?= formatTanggal($row['tanggal']) ?></td>
                                         <td class="py-2 px-2 border border-gray-300"><?= ucfirst($row['jenis_pengajuan']) ?></td>
                                         <td class="py-2 px-2 border border-gray-300">Rp <?= number_format($row['nominal'], 0, ',', '.') ?></td>
@@ -101,7 +119,17 @@ function formatTanggal($tanggal)
                                             <?php endif ?>
                                         </td>
                                     </tr>
-                                <?php endwhile ?>
+                                <?php 
+                                $no++; // Increment setelah menampilkan row
+                                endforeach ?>
+                                
+                                <?php if (empty($dataArray)) : ?>
+                                    <tr>
+                                        <td colspan="5" class="py-4 px-2 text-center text-gray-500 border border-gray-300">
+                                            Tidak ada data pengajuan
+                                        </td>
+                                    </tr>
+                                <?php endif ?>
                             </tbody>
                         </table>
                     </div>
@@ -134,7 +162,6 @@ function formatTanggal($tanggal)
 </body>
 
 </html>
-
 
 <script>
     function toggleDropdown() {

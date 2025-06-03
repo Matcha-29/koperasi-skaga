@@ -51,7 +51,7 @@ function formatTanggal($tanggal)
 
 <body class="bg-gray-100 flex justify-center">
     <div class="w-full max-w-md min-h-screen bg-white relative">
-        <div class="pt-12 px-4">
+        <div class="pt-12 px-4 pb-32">
             <div class="flex items-center mb-6">
                 <h1 class="text-2xl font-semibold text-center w-full">Ajuan Pembiayaan</h1>
             </div>
@@ -67,7 +67,7 @@ function formatTanggal($tanggal)
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-sm">
+            <div class="bg-white rounded-lg shadow-sm mb-6">
                 <div class="p-4">
                     <h2 class="text-lg font-semibold mb-4 text-center">Data Pengajuan</h2>
                     
@@ -178,4 +178,4 @@ function formatTanggal($tanggal)
             window.location.href = 'ajuan_insidental.php';
         }
     }
-</script>
+</script>   

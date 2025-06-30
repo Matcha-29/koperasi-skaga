@@ -184,7 +184,6 @@ $result = $stmt->get_result();
 
                     <div class="">
                         <button class="px-4 py-2 rounded-md bg-blue-500 font-medium text-white cursor-pointer" data-drawer-target="drawer-right-example" data-drawer-show="drawer-right-example" data-drawer-placement="right" aria-controls="drawer-right-example"><i class="fas fa-file-upload mr-1"></i> Unggah Data</button>
-                        <button class="px-4 py-2 rounded-md bg-blue-500 font-medium text-white cursor-pointer" data-drawer-target="drawer-right-nominal" data-drawer-show="drawer-right-nominal" data-drawer-placement="right" aria-controls="drawer-right-example"><i class="fas fa-pencil mr-1"></i> Ubah Nominal</button>
                     </div>
                 </div>
 
